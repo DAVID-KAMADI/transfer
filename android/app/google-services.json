@@ -1,0 +1,182 @@
+{
+  "project_info": {
+    "project_number": "199896646642",
+    "project_id": "air748",
+    "storage_bucket": "air748.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199896646642:android:3e2f8519295b7249aee16b",
+        "android_client_info": {
+          "package_name": "com.example.air748"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfOhv_Pzbla30Mo8Cx4XMiZya4oiSNK4M"
+        },
+        {
+          "current_key": "AIzaSyAQ9Jj11itB8yvOAJw20jcxitPvpReBfIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "199896646642-4bvue3n3huavgefdm1il5g3dgi5tt3v6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.air748"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199896646642:android:b7b88bbf73b469b3aee16b",
+        "android_client_info": {
+          "package_name": "com.fumasapps.air748"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfOhv_Pzbla30Mo8Cx4XMiZya4oiSNK4M"
+        },
+        {
+          "current_key": "AIzaSyAQ9Jj11itB8yvOAJw20jcxitPvpReBfIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "199896646642-4bvue3n3huavgefdm1il5g3dgi5tt3v6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.air748"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199896646642:android:87a7fd48de24ace5aee16b",
+        "android_client_info": {
+          "package_name": "com.futuresoft.air748"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "199896646642-87ekal0tl6ii9ospsple5ifnqf0shd3h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.futuresoft.air748",
+            "certificate_hash": "446ff94768474a7092c736413be858e0c8c17603"
+          }
+        },
+        {
+          "client_id": "199896646642-r54tojh4ajvjse4gj4ulg3c2pnlq0nvd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.futuresoft.air748",
+            "certificate_hash": "79cd6f80c18bef5579704eaf8aedb539915a0845"
+          }
+        },
+        {
+          "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfOhv_Pzbla30Mo8Cx4XMiZya4oiSNK4M"
+        },
+        {
+          "current_key": "AIzaSyAQ9Jj11itB8yvOAJw20jcxitPvpReBfIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "199896646642-4bvue3n3huavgefdm1il5g3dgi5tt3v6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.air748"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199896646642:android:697316c899c41a4faee16b",
+        "android_client_info": {
+          "package_name": "com.futuresoft.stores748"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfOhv_Pzbla30Mo8Cx4XMiZya4oiSNK4M"
+        },
+        {
+          "current_key": "AIzaSyAQ9Jj11itB8yvOAJw20jcxitPvpReBfIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "199896646642-en7b1ah2ocdojhdpm5nt5muphq1dap3b.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "199896646642-4bvue3n3huavgefdm1il5g3dgi5tt3v6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.air748"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
