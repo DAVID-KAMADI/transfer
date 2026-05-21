@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
-import '../transfer_details_page.dart';
+import '../AdminTransferDetailsPage.dart';
 
 class AdminTransfersPage extends StatelessWidget {
   const AdminTransfersPage({super.key});
@@ -458,7 +458,7 @@ class _AdminTransferListState extends State<AdminTransferList> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => TransferDetailsPage(doc: doc)),
+            MaterialPageRoute(builder: (_) => AdminTransferDetailsPage(doc: doc)),
           );
         },
         borderRadius: BorderRadius.circular(12),

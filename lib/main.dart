@@ -16,7 +16,12 @@ Future<void> main() async {
   // ================================
   // LOAD ENV FILE (EMAIL + PASSWORD)
   // ================================
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    print('Warning: Could not load .env file: $e');
+    print('The app will continue but email functionality may not work.');
+  }
 
   // ================================
   // INITIALIZE FIREBASE

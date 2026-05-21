@@ -506,7 +506,42 @@ class EmailService {
             white-space: pre-wrap;
             word-wrap: break-word;
         }
-        
+
+        .disclaimer-box {
+            background: #FFF7ED;
+            border: 2px solid #F97316;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .disclaimer-title {
+            color: #C2410C;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .disclaimer-content {
+            color: #9A3412;
+            line-height: 1.8;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+        }
+
+        .disclaimer-content ul {
+            margin: 12px 0;
+            padding-left: 20px;
+        }
+
+        .disclaimer-content li {
+            margin: 8px 0;
+        }
+
         .footer {
             background: #F8FAFC;
             padding: 30px 35px;
@@ -561,6 +596,23 @@ class EmailService {
         <div class="content">
             <div class="message-box">
                 <div class="message-text">$body</div>
+            </div>
+
+            <div class="disclaimer-box">
+                <div class="disclaimer-title">
+                    ⚠️ IMPORTANT DISCLAIMER
+                </div>
+                <div class="disclaimer-content">
+                    By accepting and confirming receipt of the transferred part(s), the receiving store, department, or authorized user acknowledges and assumes full responsibility, custody, and accountability for the part(s) effective from the date and time of confirmation.
+
+                    <p style="margin-top: 12px;">Such responsibility shall remain in effect until the transferred part(s) are:</p>
+                    <ul>
+                        <li>officially installed, utilized, or consumed in authorized operations; or</li>
+                        <li>formally transferred to another authorized store, department, or user through the approved transfer process within the system.</li>
+                    </ul>
+
+                    <p style="margin-top: 12px;">The receiving party is responsible for ensuring the proper handling, storage, safeguarding, inventory control, and accurate status management of the transferred part(s) during this period. Any loss, damage, misuse, discrepancy, or unauthorized transfer occurring after confirmation of receipt shall be the responsibility of the receiving party.</p>
+                </div>
             </div>
         </div>
         

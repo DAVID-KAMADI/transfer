@@ -1386,6 +1386,514 @@ class PDFService {
   }
 
   // =====================================================
+  // DELIVERY NOTE GENERATION
+  // =====================================================
+  static Future<Uint8List?> generateDeliveryNote(
+    Map<String, dynamic> transferData,
+    String? logoBase64,
+  ) async {
+    try {
+      debugPrint('📄 Starting Delivery Note generation...');
+
+      final pdf = pw.Document();
+      final font = await _customFont;
+
+      final transferNo = transferData['transferNo']?.toString() ?? '-';
+      final fromStore = transferData['fromStore']?.toString() ?? '-';
+      final toStore = transferData['toStore']?.toString() ?? '-';
+      final assignedTo =
+          transferData['assignedToName']?.toString() ??
+          transferData['assignedTo']?.toString() ??
+          '-';
+      final receiverName =
+          transferData['receiverUserName']?.toString() ??
+          transferData['receiverEmail']?.toString() ??
+          '-';
+      final items = transferData['items'] as List? ?? [];
+      final receivedAt = transferData['receivedAt'];
+      final status = transferData['status']?.toString() ?? 'pending';
+
+      // Group items by description and sum quantities
+      final groupedItems = <String, int>{};
+      for (final item in items) {
+        final description = item['descr']?.toString() ?? 'Unknown';
+        final quantity = item['qty'] is int
+            ? item['qty'] as int
+            : int.tryParse(item['qty']?.toString() ?? '0') ?? 1;
+        groupedItems[description] = (groupedItems[description] ?? 0) + quantity;
+      }
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(28),
+          build: (context) => pw.Column(
+            children: [
+              // Header
+              _buildDeliveryNoteHeader(
+                font,
+                logoBase64,
+                transferNo,
+                fromStore,
+                toStore,
+              ),
+              pw.SizedBox(height: 20),
+
+              // Transfer Info
+              _buildDeliveryNoteInfo(
+                font,
+                transferData,
+                assignedTo,
+                receiverName,
+                receivedAt,
+                status,
+              ),
+              pw.SizedBox(height: 20),
+
+              // Items Table
+              _buildDeliveryNoteItemsTable(font, groupedItems),
+              pw.SizedBox(height: 20),
+
+              // Footer
+              _buildDeliveryNoteFooter(font, transferData),
+            ],
+          ),
+        ),
+      );
+
+      final bytes = await pdf.save();
+      debugPrint('✅ Delivery Note generated: ${bytes.length} bytes');
+      return bytes;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Delivery Note Error: $e');
+      debugPrint(stackTrace.toString());
+      return null;
+    }
+  }
+
+  static pw.Widget _buildDeliveryNoteHeader(
+    pw.Font font,
+    String? logoBase64,
+    String transferNo,
+    String fromStore,
+    String toStore,
+  ) {
+    return pw.Row(
+      children: [
+        if (logoBase64 != null) ...[
+          pw.Container(
+            width: 80,
+            height: 80,
+            decoration: pw.BoxDecoration(
+              borderRadius: pw.BorderRadius.circular(8),
+              color: PdfColors.white,
+            ),
+            child: pw.Center(
+              child: pw.Image(
+                pw.MemoryImage(base64Decode(logoBase64.split(',').last)),
+                fit: pw.BoxFit.contain,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 20),
+        ],
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'DELIVERY NOTE',
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 32,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _pdfPrimary,
+                ),
+              ),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                'Transfer #$transferNo',
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 18,
+                  color: _pdfTextSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        pw.Container(
+          padding: pw.EdgeInsets.all(16),
+          decoration: pw.BoxDecoration(
+            color: _pdfSurface,
+            borderRadius: pw.BorderRadius.circular(8),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                'From: $fromStore',
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 14,
+                  color: _pdfTextPrimary,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                'To: $toStore',
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 14,
+                  color: _pdfTextPrimary,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _buildDeliveryNoteInfo(
+    pw.Font font,
+    Map<String, dynamic> transferData,
+    String assignedTo,
+    String receiverName,
+    dynamic receivedAt,
+    String status,
+  ) {
+    final receivedAtFormatted = receivedAt != null
+        ? DateFormat('MMM dd, yyyy HH:mm').format(
+            receivedAt is Timestamp
+                ? receivedAt.toDate()
+                : DateTime.parse(receivedAt.toString()),
+          )
+        : '-';
+
+    return pw.Container(
+      padding: pw.EdgeInsets.all(16),
+      decoration: pw.BoxDecoration(
+        color: _pdfSurface,
+        borderRadius: pw.BorderRadius.circular(8),
+        border: pw.Border.all(color: _pdfColorWithOpacity(textSecondary, 0.2)),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _buildInfoRow(font, 'Driver/Assigned To:', assignedTo),
+                pw.SizedBox(height: 8),
+                _buildInfoRow(font, 'Received By:', receiverName),
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 20),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _buildInfoRow(font, 'Status:', status),
+                pw.SizedBox(height: 8),
+                _buildInfoRow(font, 'Received At:', receivedAtFormatted),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _buildInfoRow(pw.Font font, String label, String value) {
+    return pw.Row(
+      children: [
+        pw.Container(
+          width: 120,
+          child: pw.Text(
+            label,
+            style: pw.TextStyle(
+              font: font,
+              fontSize: 12,
+              color: _pdfTextSecondary,
+            ),
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Text(
+            value,
+            style: pw.TextStyle(
+              font: font,
+              fontSize: 12,
+              fontWeight: pw.FontWeight.bold,
+              color: _pdfTextPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _buildDeliveryNoteItemsTable(
+    pw.Font font,
+    Map<String, int> groupedItems,
+  ) {
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        borderRadius: pw.BorderRadius.circular(8),
+        border: pw.Border.all(color: _pdfColorWithOpacity(textSecondary, 0.2)),
+      ),
+      child: pw.Column(
+        children: [
+          // Table Header
+          pw.Container(
+            padding: pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              color: _pdfPrimary,
+              borderRadius: pw.BorderRadius.only(
+                topLeft: pw.Radius.circular(8),
+                topRight: pw.Radius.circular(8),
+              ),
+            ),
+            child: pw.Row(
+              children: [
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Text(
+                    'Item Description',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                ),
+                pw.Expanded(
+                  flex: 1,
+                  child: pw.Text(
+                    'Quantity',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Table Rows
+          ...groupedItems.entries.map((entry) {
+            return pw.Container(
+              padding: pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(
+                    color: _pdfColorWithOpacity(textSecondary, 0.1),
+                  ),
+                ),
+              ),
+              child: pw.Row(
+                children: [
+                  pw.Expanded(
+                    flex: 3,
+                    child: pw.Text(
+                      entry.key,
+                      style: pw.TextStyle(
+                        font: font,
+                        fontSize: 11,
+                        color: _pdfTextPrimary,
+                      ),
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 1,
+                    child: pw.Text(
+                      entry.value.toString(),
+                      style: pw.TextStyle(
+                        font: font,
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _pdfAccent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          // Total
+          pw.Container(
+            padding: pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              color: _pdfSurface,
+              borderRadius: pw.BorderRadius.only(
+                bottomLeft: pw.Radius.circular(8),
+                bottomRight: pw.Radius.circular(8),
+              ),
+            ),
+            child: pw.Row(
+              children: [
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Text(
+                    'Total Items:',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _pdfPrimary,
+                    ),
+                  ),
+                ),
+                pw.Expanded(
+                  flex: 1,
+                  child: pw.Text(
+                    groupedItems.length.toString(),
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _pdfAccent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _buildDeliveryNoteFooter(
+    pw.Font font,
+    Map<String, dynamic> transferData,
+  ) {
+    final currentDate = DateFormat('MMM dd, yyyy').format(DateTime.now());
+    final signature = transferData['signature'] as String?;
+    // Use receiverUserName (matched from database) first, then receivedBy/receiverName
+    final receiverName =
+        transferData['receiverUserName']?.toString() ??
+        transferData['receiverName']?.toString() ??
+        transferData['receivedBy']?.toString() ??
+        'Receiver';
+
+    debugPrint('📋 Footer - Signature: ${signature != null ? "Yes" : "No"}');
+    debugPrint('📋 Footer - Receiver Name: $receiverName');
+    debugPrint('📋 Footer - Generated on: $currentDate');
+
+    return pw.Column(
+      mainAxisSize: pw.MainAxisSize.min,
+      children: [
+        pw.Divider(color: _pdfColorWithOpacity(textSecondary, 0.2)),
+        pw.SizedBox(height: 16),
+        pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                children: [
+                  pw.Container(
+                    padding: pw.EdgeInsets.all(12),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(
+                        color: _pdfColorWithOpacity(textSecondary, 0.3),
+                      ),
+                      borderRadius: pw.BorderRadius.circular(8),
+                    ),
+                    child: pw.Column(
+                      children: [
+                        if (signature != null && signature.isNotEmpty) ...[
+                          pw.Container(
+                            height: 60,
+                            child: pw.Image(
+                              pw.MemoryImage(
+                                base64Decode(signature.split(',').last),
+                              ),
+                              fit: pw.BoxFit.contain,
+                            ),
+                          ),
+                        ] else ...[
+                          pw.SizedBox(height: 60),
+                          pw.Center(
+                            child: pw.Text(
+                              'No signature',
+                              style: pw.TextStyle(
+                                font: font,
+                                fontSize: 10,
+                                color: _pdfColorWithOpacity(textSecondary, 0.5),
+                                fontStyle: pw.FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          'Receiver Signature',
+                          style: pw.TextStyle(
+                            font: font,
+                            fontSize: 10,
+                            color: _pdfTextSecondary,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Divider(
+                          color: _pdfColorWithOpacity(textSecondary, 0.3),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Signed by: $receiverName',
+                          style: pw.TextStyle(
+                            font: font,
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _pdfTextPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                ],
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 16),
+        pw.Divider(color: _pdfColorWithOpacity(textSecondary, 0.2)),
+        pw.SizedBox(height: 8),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text(
+              'Generated on: $currentDate',
+              style: pw.TextStyle(
+                font: font,
+                fontSize: 10,
+                color: _pdfTextSecondary,
+              ),
+            ),
+            pw.Text(
+              '748 Store System',
+              style: pw.TextStyle(
+                font: font,
+                fontSize: 10,
+                color: _pdfTextSecondary,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // =====================================================
   // PDF DOWNLOAD (Platform Agnostic)
   // =====================================================
 

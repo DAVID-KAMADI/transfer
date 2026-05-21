@@ -11,10 +11,8 @@ class ApiService {
   static Future<List<Transfer>> fetchTransferDetails(String no) async {
     final url = Uri.parse('$baseUrl/Transfer/Details?no=$no');
 
-
     try {
       final response = await http.get(url);
-
 
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
@@ -39,7 +37,6 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> fetchUsersByRole(
     String selectedRole,
   ) async {
-
     try {
       // Use Firebase to query users by role from 748 Air Services
       final db = FirebaseFirestore.instance;
@@ -58,6 +55,7 @@ class ApiService {
             'id': doc.id,
             'name': data['name'] ?? '',
             'email': data['email'] ?? '',
+            
             'phone': data['Staff_Telephone'] ?? '',
             'Staff_Section': data['Staff_Section'] ?? '',
             'Staff_Level': data['Staff_Level'] ?? '',
@@ -94,7 +92,6 @@ class ApiService {
         databaseId: 'interstore',
       );
 
-
       for (final user in selectedUsers) {
         await db.collection('users').doc(user['email'] ?? '').set({
           'name': user['name'] ?? '',
@@ -103,9 +100,7 @@ class ApiService {
           'role': user['Staff_Section'] ?? 'pending',
           'createdAt': FieldValue.serverTimestamp(),
         });
-
       }
-
     } catch (e) {
       throw Exception('Failed to save users to interstore');
     }

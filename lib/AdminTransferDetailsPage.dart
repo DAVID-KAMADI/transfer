@@ -1,12 +1,18 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously, file_names
 
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:inter_store/services/email_service.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import '../services/pdf_service.dart';
 
 class AdminTransferDetailsPage extends StatefulWidget {
   final DocumentSnapshot doc;
@@ -32,6 +38,9 @@ class _AdminTransferDetailsPageState extends State<AdminTransferDetailsPage> {
 
   // Store receiver user name
   String? _receiverUserName;
+
+  // Loading state for PDF generation
+  bool _isGeneratingPdf = false;
 
   static const Color primaryDark = Color(0xFF1E3A5F);
   static const Color primaryMedium = Color(0xFF2E5A8C);
@@ -272,6 +281,26 @@ class _AdminTransferDetailsPageState extends State<AdminTransferDetailsPage> {
           "Transfer Details",
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: [
+          if (_isGeneratingPdf)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              onPressed: _generateDeliveryNote,
+              icon: const Icon(Icons.picture_as_pdf),
+              tooltip: 'Generate Delivery Note',
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -646,8 +675,6 @@ class _AdminTransferDetailsPageState extends State<AdminTransferDetailsPage> {
   }
 
   Widget _buildCompletedInfo(Map<String, dynamic> data) {
-    final otpData = data['otpData'] as Map<String, dynamic>? ?? {};
-
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -684,14 +711,6 @@ class _AdminTransferDetailsPageState extends State<AdminTransferDetailsPage> {
           _infoRow("Receiver Email", data['receiverEmail'] ?? '-'),
           _infoRow("Received At", _formatTimestamp(data['receivedAt'])),
           const Divider(height: 20),
-          const Text(
-            "OTP Verification",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          _infoRow("OTP Code", otpData['code']),
-          _infoRow("Created", _formatTimestamp(otpData['createdAt'])),
-          _infoRow("Verified", _formatTimestamp(otpData['verifiedAt'])),
         ],
       ),
     );
@@ -719,5 +738,167 @@ class _AdminTransferDetailsPageState extends State<AdminTransferDetailsPage> {
         ],
       ),
     );
+  }
+
+  // =========================================================
+  // 📄 GENERATE DELIVERY NOTE
+  // =========================================================
+  Future<void> _generateDeliveryNote() async {
+    setState(() => _isGeneratingPdf = true);
+
+    try {
+      final data = widget.doc.data() as Map<String, dynamic>? ?? {};
+
+      // Add receiver user name to the data
+      final transferData = Map<String, dynamic>.from(data);
+      if (_receiverUserName != null) {
+        transferData['receiverUserName'] = _receiverUserName;
+      }
+
+      // Fetch logo for delivery note
+      EmailService.clearLogoCache();
+      final logoBase64 = await EmailService.getLogoBase64();
+      debugPrint('Logo fetched for delivery note: ${logoBase64 != null ? 'Yes' : 'No'}');
+
+      final pdfBytes = await PDFService.generateDeliveryNote(
+        transferData,
+        logoBase64,
+      );
+
+      if (pdfBytes != null && mounted) {
+        _showDeliveryNoteOptions(pdfBytes, data['transferNo'] ?? 'transfer');
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to generate delivery note'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating delivery note: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingPdf = false);
+      }
+    }
+  }
+
+  // =========================================================
+  // 📋 SHOW DELIVERY NOTE OPTIONS
+  // =========================================================
+  void _showDeliveryNoteOptions(Uint8List pdfBytes, String transferNo) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Delivery Note',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text('Choose an action for the delivery note:'),
+        actions: [
+          // Preview/Print
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Printing.layoutPdf(
+                onLayout: (format) => pdfBytes,
+                name: 'Delivery_Note_$transferNo',
+              );
+            },
+            icon: const Icon(Icons.print),
+            label: const Text('Preview/Print'),
+          ),
+          // Save
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _savePdf(pdfBytes, transferNo);
+            },
+            icon: const Icon(Icons.download),
+            label: const Text('Save'),
+          ),
+          // Share
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _sharePdf(pdfBytes, transferNo);
+            },
+            icon: const Icon(Icons.share),
+            label: const Text('Share'),
+          ),
+          // Cancel
+          TextButton.icon(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+            label: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
+  // 💾 SAVE PDF
+  // =========================================================
+  Future<void> _savePdf(Uint8List pdfBytes, String transferNo) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/Delivery_Note_$transferNo.pdf');
+      await file.writeAsBytes(pdfBytes);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saved to: ${file.path}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // =========================================================
+  // 📤 SHARE PDF
+  // =========================================================
+  Future<void> _sharePdf(Uint8List pdfBytes, String transferNo) async {
+    try {
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/Delivery_Note_$transferNo.pdf');
+      await file.writeAsBytes(pdfBytes);
+
+      if (mounted) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          subject: 'Delivery Note - $transferNo',
+          text: 'Delivery note for transfer $transferNo',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sharing PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
